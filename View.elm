@@ -54,7 +54,18 @@ view { set, solution } next =
             else
                 problem
     in
-        div [ css [ fontSize large ] ] all
+        div
+            [ css
+                [ fontSize large
+                , property "-webkit-touch-callout" "none"
+                , property "-webkit-user-select" "none"
+                , property "-khtml-user-select" "none"
+                , property "-moz-user-select" "none"
+                , property "-ms-user-select" "none"
+                , property "user-select" "none"
+                ]
+            ]
+            all
 
 
 drawSolution : List Card -> Int -> Html Internal
@@ -109,7 +120,7 @@ drawCard effect top bottom =
         [ css
             [ display inlineFlex
             , flexDirection column
-            , margin (Css.em 0.11)
+            , margin (Css.em 0.18)
             , hover
                 [ boxShadow3 (Css.em 0.2) (Css.em 0.1) gray
                 ]
