@@ -29,6 +29,7 @@ view { set, solution } next =
     let
         problem =
             [ drawSet set
+            , hr [] []
             , drawSolution solution (min alen blen)
             ]
                 |> List.map (map Internal)
@@ -91,6 +92,7 @@ cardRow =
     div
         [ css
             [ displayFlex
+            , flexWrap wrap
             , margin (Css.em 1)
             ]
         ]

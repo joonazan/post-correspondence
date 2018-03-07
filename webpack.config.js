@@ -11,6 +11,6 @@ module.exports = {
     }]
   },
   plugins: [
-    new HtmlWebPackPlugin({title: "Post Correspondence"})
+    new HtmlWebPackPlugin({template: './index.html'})
   ]
 };
