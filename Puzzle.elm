@@ -1,10 +1,8 @@
 module Puzzle exposing (..)
 
-import Array exposing (Array)
-
 
 type alias Puzzle =
-    { set : Array Card
+    { set : List Card
     , solution : List Card
     }
 

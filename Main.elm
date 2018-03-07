@@ -1,26 +1,18 @@
 module Main exposing (..)
 
 import Html.Styled as Html exposing (Html)
-import Array
 import Update
 import Puzzle exposing (..)
-import View exposing (Msg(..))
-
-
-type alias Model =
-    { puzzle : Puzzle
-    , puzzles : List (List Card)
-    }
+import View exposing (Msg(..), Model)
 
 
 main : Program Never Model Msg
 main =
     Html.beginnerProgram
         { model =
-            { puzzle = { set = Array.empty, solution = [] }
-            , puzzles = puzzles
+            { puzzle = { set = simple, solution = [] }
+            , puzzles = [ turingMachine ]
             }
-                |> nextPuzzle
         , update = update
         , view = view
         }
@@ -29,33 +21,29 @@ main =
 update : Msg -> Model -> Model
 update msg ({ puzzle } as model) =
     case msg of
-        NextPuzzle ->
-            nextPuzzle model
+        NextPuzzle state ->
+            state
 
         Internal m ->
             { model | puzzle = Update.update m puzzle }
 
 
 view : Model -> Html Msg
-view { puzzle, puzzles } =
-    View.view puzzle
+view ({ puzzle } as model) =
+    View.view puzzle (nextPuzzle model)
 
 
-nextPuzzle : Model -> Model
+nextPuzzle : Model -> Maybe Model
 nextPuzzle ({ puzzles } as old) =
     case puzzles of
         head :: tail ->
-            { puzzle = { set = Array.fromList head, solution = [] }
-            , puzzles = tail
-            }
+            Just
+                { puzzle = { set = head, solution = [] }
+                , puzzles = tail
+                }
 
         _ ->
-            old
-
-
-puzzles : List (List Card)
-puzzles =
-    [ simple, turingMachine ]
+            Nothing
 
 
 simple : List Card

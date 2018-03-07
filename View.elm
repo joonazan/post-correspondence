@@ -1,6 +1,5 @@
-module View exposing (Msg(..), Internal(..), view)
+module View exposing (Msg(..), Model, Internal(..), view)
 
-import Array exposing (Array)
 import Css exposing (..)
 import Css.Colors exposing (gray)
 import Html.Styled exposing (..)
@@ -9,18 +8,24 @@ import Html.Styled.Events exposing (onClick)
 import Puzzle exposing (..)
 
 
+type alias Model =
+    { puzzle : Puzzle
+    , puzzles : List (List Card)
+    }
+
+
 type Msg
     = Internal Internal
-    | NextPuzzle
+    | NextPuzzle Model
 
 
 type Internal
-    = Palette Int
+    = AddCard Card
     | Solution Int
 
 
-view : Puzzle -> Html Msg
-view { set, solution } =
+view : Puzzle -> Maybe Model -> Html Msg
+view { set, solution } next =
     let
         problem =
             [ drawSet set
@@ -41,7 +46,9 @@ view { set, solution } =
             if isSolved then
                 problem
                     ++ [ p [] [ text "Good Job!" ]
-                       , button [ onClick NextPuzzle ] [ text "NEXT" ]
+                       , next
+                            |> Maybe.map (\p -> button [ onClick (NextPuzzle p) ] [ text "NEXT" ])
+                            |> Maybe.withDefault (p [] [ text "All puzzles solved!" ])
                        ]
             else
                 problem
@@ -61,10 +68,7 @@ drawCardInSolution :
     -> ( List (Html Internal), Int, Int )
     -> ( List (Html Internal), Int, Int )
 drawCardInSolution ( i, ( top, bottom ) ) ( acc, lettersTop, lettersBottom ) =
-    ( (drawCard (split lettersTop top) (split lettersBottom bottom)
-        |> map (always <| Solution i)
-      )
-        :: acc
+    ( drawCard (Solution i) (split lettersTop top) (split lettersBottom bottom) :: acc
     , lettersTop - String.length top
     , lettersBottom - String.length bottom
     )
@@ -77,12 +81,9 @@ split x s =
     ]
 
 
-drawSet : Array Card -> Html Internal
-drawSet cards =
-    Array.toList cards
-        |> List.indexedMap drawCardInSet
-        |> cardRow
-        |> map Palette
+drawSet : List Card -> Html Internal
+drawSet =
+    List.map drawCardInSet >> cardRow
 
 
 cardRow : List (Html msg) -> Html msg
@@ -95,14 +96,13 @@ cardRow =
         ]
 
 
-drawCardInSet : Int -> Card -> Html Int
-drawCardInSet index ( top, bottom ) =
-    drawCard [ text top ] [ text bottom ]
-        |> map (always index)
+drawCardInSet : Card -> Html Internal
+drawCardInSet (( top, bottom ) as card) =
+    drawCard (AddCard card) [ text top ] [ text bottom ]
 
 
-drawCard : List (Html ()) -> List (Html ()) -> Html ()
-drawCard top bottom =
+drawCard : msg -> List (Html msg) -> List (Html msg) -> Html msg
+drawCard effect top bottom =
     div
         [ css
             [ display inlineFlex
@@ -112,7 +112,7 @@ drawCard top bottom =
                 [ boxShadow3 (Css.em 0.2) (Css.em 0.1) gray
                 ]
             ]
-        , onClick ()
+        , onClick effect
         ]
         [ drawHalf top, drawHalf bottom ]
 

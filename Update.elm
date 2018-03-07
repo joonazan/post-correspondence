@@ -1,7 +1,5 @@
 module Update exposing (update)
 
-import Array
-import Maybe.Extra as Maybe
 import Puzzle exposing (..)
 import View exposing (Internal(..))
 
@@ -11,19 +9,23 @@ update msg ({ set, solution } as model) =
     { model
         | solution =
             case msg of
-                Palette x ->
-                    Array.get x set
-                        |> Maybe.map (\x -> solution ++ [ x ])
-                        |> Maybe.filter goodSoFar
-                        |> Maybe.withDefault solution
+                AddCard card ->
+                    let
+                        newSolution =
+                            solution ++ [ card ]
+                    in
+                        if valid newSolution then
+                            newSolution
+                        else
+                            solution
 
                 Solution x ->
                     List.take x solution
     }
 
 
-goodSoFar : List Card -> Bool
-goodSoFar cards =
+valid : List Card -> Bool
+valid cards =
     let
         ( top, bottom ) =
             concatCards cards
