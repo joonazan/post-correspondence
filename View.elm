@@ -1,4 +1,4 @@
-module View exposing (Msg(..), view)
+module View exposing (Msg(..), Internal(..), view)
 
 import Array exposing (Array)
 import Css exposing (..)
@@ -6,21 +6,27 @@ import Css.Colors exposing (gray)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css)
 import Html.Styled.Events exposing (onClick)
-import Model exposing (..)
+import Puzzle exposing (..)
 
 
 type Msg
+    = Internal Internal
+    | NextPuzzle
+
+
+type Internal
     = Palette Int
     | Solution Int
 
 
-view : Model -> Html Msg
+view : Puzzle -> Html Msg
 view { set, solution } =
     let
         problem =
             [ drawSet set
             , drawSolution solution (min alen blen)
             ]
+                |> List.map (map Internal)
 
         ( a, b ) =
             concatCards solution
@@ -28,16 +34,22 @@ view { set, solution } =
         ( alen, blen ) =
             ( String.length a, String.length b )
 
+        isSolved =
+            alen /= 0 && alen == blen
+
         all =
-            if alen /= 0 && alen == blen then
-                problem ++ [ text "Good Job!" ]
+            if isSolved then
+                problem
+                    ++ [ p [] [ text "Good Job!" ]
+                       , button [ onClick NextPuzzle ] [ text "NEXT" ]
+                       ]
             else
                 problem
     in
-    div [ css [ fontSize large ] ] all
+        div [ css [ fontSize large ] ] all
 
 
-drawSolution : List Card -> Int -> Html Msg
+drawSolution : List Card -> Int -> Html Internal
 drawSolution cards same =
     List.indexedMap (,) cards
         |> List.foldl drawCardInSolution ( [], same, same )
@@ -46,8 +58,8 @@ drawSolution cards same =
 
 drawCardInSolution :
     ( Int, ( String, String ) )
-    -> ( List (Html Msg), Int, Int )
-    -> ( List (Html Msg), Int, Int )
+    -> ( List (Html Internal), Int, Int )
+    -> ( List (Html Internal), Int, Int )
 drawCardInSolution ( i, ( top, bottom ) ) ( acc, lettersTop, lettersBottom ) =
     ( (drawCard (split lettersTop top) (split lettersBottom bottom)
         |> map (always <| Solution i)
@@ -65,7 +77,7 @@ split x s =
     ]
 
 
-drawSet : Array Card -> Html Msg
+drawSet : Array Card -> Html Internal
 drawSet cards =
     Array.toList cards
         |> List.indexedMap drawCardInSet
@@ -95,7 +107,7 @@ drawCard top bottom =
         [ css
             [ display inlineFlex
             , flexDirection column
-            , margin (Css.em 0.2)
+            , margin (Css.em 0.11)
             , hover
                 [ boxShadow3 (Css.em 0.2) (Css.em 0.1) gray
                 ]

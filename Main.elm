@@ -1,23 +1,65 @@
 module Main exposing (..)
 
+import Html.Styled as Html exposing (Html)
 import Array
-import Html.Styled as Html
-import Maybe.Extra as Maybe
-import Model exposing (..)
+import Update
+import Puzzle exposing (..)
 import View exposing (Msg(..))
+
+
+type alias Model =
+    { puzzle : Puzzle
+    , puzzles : List (List Card)
+    }
 
 
 main : Program Never Model Msg
 main =
     Html.beginnerProgram
-        { model = { set = Array.fromList easyPuzzle, solution = [] }
+        { model =
+            { puzzle = { set = Array.empty, solution = [] }
+            , puzzles = puzzles
+            }
+                |> nextPuzzle
         , update = update
-        , view = View.view
+        , view = view
         }
 
 
-easyPuzzle : List Card
-easyPuzzle =
+update : Msg -> Model -> Model
+update msg ({ puzzle } as model) =
+    case msg of
+        NextPuzzle ->
+            nextPuzzle model
+
+        Internal m ->
+            { model | puzzle = Update.update m puzzle }
+
+
+view : Model -> Html Msg
+view { puzzle, puzzles } =
+    View.view puzzle
+
+
+nextPuzzle : Model -> Model
+nextPuzzle ({ puzzles } as old) =
+    case puzzles of
+        head :: tail ->
+            { puzzle = { set = Array.fromList head, solution = [] }
+            , puzzles = tail
+            }
+
+        _ ->
+            old
+
+
+puzzles : List (List Card)
+puzzles =
+    [ simple, turingMachine ]
+
+
+simple : List Card
+simple =
     [ ( "b", "ca" )
     , ( "a", "ab" )
     , ( "ca", "a" )
@@ -25,26 +67,33 @@ easyPuzzle =
     ]
 
 
-update : Msg -> Model -> Model
-update msg ({ set, solution } as model) =
-    { model
-        | solution =
-            case msg of
-                Palette x ->
-                    Array.get x set
-                        |> Maybe.map (\x -> solution ++ [ x ])
-                        |> Maybe.filter goodSoFar
-                        |> Maybe.withDefault solution
+turingMachine : List Card
+turingMachine =
+    ( ".#", "." ++ star "#c110#" ++ "." )
+        :: ( ".a.#.?", "?" )
+        :: List.map (\( a, b ) -> ( "." ++ star a, star b ++ "." ))
+            (List.map id [ "0", "1", "#" ]
+                ++ [ ( "c1", "0c" )
+                   , ( "c0", "1n" )
+                   , ( "n0", "0n" )
+                   , ( "n1", "1n" )
+                   , ( "n#", "a#" )
+                   , ( "c#", "1a#" )
+                   , ( "a0", "a" )
+                   , ( "a1", "a" )
+                   , ( "0a", "a" )
+                   , ( "1a", "a" )
+                   ]
+            )
 
-                Solution x ->
-                    List.take x solution
-    }
+
+id : String -> Card
+id x =
+    ( x, x )
 
 
-goodSoFar : List Card -> Bool
-goodSoFar cards =
-    let
-        ( top, bottom ) =
-            concatCards cards
-    in
-    String.startsWith top bottom || String.startsWith bottom top
+star : String -> String
+star =
+    String.toList
+        >> List.intersperse '.'
+        >> String.fromList

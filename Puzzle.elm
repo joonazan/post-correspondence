@@ -1,9 +1,9 @@
-module Model exposing (..)
+module Puzzle exposing (..)
 
 import Array exposing (Array)
 
 
-type alias Model =
+type alias Puzzle =
     { set : Array Card
     , solution : List Card
     }
@@ -24,4 +24,4 @@ concatCards cards =
             List.map Tuple.second cards
                 |> String.concat
     in
-    ( top, bottom )
+        ( top, bottom )
